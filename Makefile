@@ -61,10 +61,13 @@ start-sonar-scanner:
 	docker run --rm --network calc-sonar -v `pwd`:/usr/src sonarsource/sonar-scanner-cli
 
 pylint:
-	docker run --rm --volume `pwd`:/opt/calc --env PYTHONPATH=/opt/calc -w /opt/calc calculator-app:latest pylint app/ | tee results/pylint_result.txt
+	docker run --rm --volume `pwd`:/opt/calc --env PYTHONPATH=/opt/calc -w /opt/calc calculator-app:latest pylint app/ | powershell -Command "Out-File -FilePath results/pylint_result.txt -Append"
 
 deploy-stage:
 	docker stop apiserver || exit /b 0
 	docker stop calc-web || exit /b 0
 	docker run -d --rm --name apiserver --network-alias apiserver --env PYTHONPATH=/opt/calc --env FLASK_APP=app/api.py -p 5000:5000 -w /opt/calc calculator-app:latest flask run --host=0.0.0.0
 	docker run -d --rm --name calc-web -p 80:80 calc-web
+
+stop-containers:
+	docker ps --filter "name=apiserver" --filter "name=calc-web" -q | grep -q . && docker stop apiserver calc-web || echo "No containers to stop"
